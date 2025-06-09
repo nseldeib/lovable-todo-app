@@ -1,310 +1,156 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import Header from '@/components/Header';
-import TaskCard from '@/components/TaskCard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Plus, Search } from 'lucide-react';
-import type { Tables } from '@/integrations/supabase/types';
-
-type Task = Tables<'tasks'>;
-type ChecklistItem = Tables<'checklist_items'>;
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, CheckSquare, Star, FolderOpen } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showCreateTask, setShowCreateTask] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
 
-  const { data: tasks, isLoading } = useQuery({
-    queryKey: ['tasks', user?.id],
+  const { data: stats } = useQuery({
+    queryKey: ['dashboard-stats', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const [tasksResult, projectsResult] = await Promise.all([
+        supabase
+          .from('tasks')
+          .select('status, is_important')
+          .eq('user_id', user.id),
+        supabase
+          .from('projects')
+          .select('id')
+          .eq('user_id', user.id)
+      ]);
+
+      const tasks = tasksResult.data || [];
+      const projects = projectsResult.data || [];
+
+      return {
+        totalTasks: tasks.length,
+        completedTasks: tasks.filter(t => t.status === 'completed').length,
+        importantTasks: tasks.filter(t => t.is_important).length,
+        totalProjects: projects.length,
+        pendingTasks: tasks.filter(t => t.status !== 'completed').length,
+      };
+    },
+    enabled: !!user,
+  });
+
+  const { data: recentTasks } = useQuery({
+    queryKey: ['recent-tasks', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
       const { data, error } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          checklist_items (*)
-        `)
+        .select('id, title, status, is_important, created_at')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as (Task & { checklist_items: ChecklistItem[] })[];
-    },
-    enabled: !!user,
-  });
-
-  const createTaskMutation = useMutation({
-    mutationFn: async (title: string) => {
-      if (!user) throw new Error('User not authenticated');
-      
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert({
-          title,
-          user_id: user.id,
-        })
-        .select()
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(5);
       
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      setNewTaskTitle('');
-      setShowCreateTask(false);
-      toast({
-        title: "Task created",
-        description: "Your new task has been created successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error creating task",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    enabled: !!user,
   });
 
-  const updateTaskMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Task> }) => {
-      const { error } = await supabase
-        .from('tasks')
-        .update(updates)
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    },
-  });
-
-  const updateChecklistItemMutation = useMutation({
-    mutationFn: async ({ id, isCompleted }: { id: string; isCompleted: boolean }) => {
-      const { error } = await supabase
-        .from('checklist_items')
-        .update({ is_completed: isCompleted })
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    },
-  });
-
-  const filteredTasks = tasks?.filter(task =>
-    task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    task.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
-
-  const importantTasks = filteredTasks.filter(task => task.is_important);
-  const todoTasks = filteredTasks.filter(task => task.status === 'todo');
-  const inProgressTasks = filteredTasks.filter(task => task.status === 'in_progress');
-  const completedTasks = filteredTasks.filter(task => task.status === 'completed');
-
-  const handleCreateTask = () => {
-    if (newTaskTitle.trim()) {
-      createTaskMutation.mutate(newTaskTitle.trim());
-    }
-  };
-
-  if (isLoading) {
+  if (!stats) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading your tasks...</p>
-          </div>
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header onCreateTask={() => setShowCreateTask(true)} />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search tasks..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Quick Create Task */}
-        {showCreateTask && (
-          <div className="mb-8 p-4 bg-white rounded-lg border">
-            <div className="flex space-x-2">
-              <Input
-                placeholder="What needs to be done?"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleCreateTask()}
-              />
-              <Button onClick={handleCreateTask} disabled={!newTaskTitle.trim()}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Task
-              </Button>
-              <Button variant="outline" onClick={() => setShowCreateTask(false)}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Task Tabs */}
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="all">All ({filteredTasks.length})</TabsTrigger>
-            <TabsTrigger value="important">Important ({importantTasks.length})</TabsTrigger>
-            <TabsTrigger value="todo">To Do ({todoTasks.length})</TabsTrigger>
-            <TabsTrigger value="progress">In Progress ({inProgressTasks.length})</TabsTrigger>
-            <TabsTrigger value="completed">Completed ({completedTasks.length})</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all" className="mt-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onToggleImportant={(taskId, isImportant) =>
-                    updateTaskMutation.mutate({ id: taskId, updates: { is_important: isImportant } })
-                  }
-                  onToggleStatus={(taskId, status) =>
-                    updateTaskMutation.mutate({ id: taskId, updates: { status } })
-                  }
-                  onToggleChecklistItem={(itemId, isCompleted) =>
-                    updateChecklistItemMutation.mutate({ id: itemId, isCompleted })
-                  }
-                  onClick={() => {
-                    // TODO: Open task detail modal/page
-                    console.log('Open task details for:', task.id);
-                  }}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="important" className="mt-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {importantTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onToggleImportant={(taskId, isImportant) =>
-                    updateTaskMutation.mutate({ id: taskId, updates: { is_important: isImportant } })
-                  }
-                  onToggleStatus={(taskId, status) =>
-                    updateTaskMutation.mutate({ id: taskId, updates: { status } })
-                  }
-                  onToggleChecklistItem={(itemId, isCompleted) =>
-                    updateChecklistItemMutation.mutate({ id: itemId, isCompleted })
-                  }
-                  onClick={() => console.log('Open task details for:', task.id)}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="todo" className="mt-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {todoTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onToggleImportant={(taskId, isImportant) =>
-                    updateTaskMutation.mutate({ id: taskId, updates: { is_important: isImportant } })
-                  }
-                  onToggleStatus={(taskId, status) =>
-                    updateTaskMutation.mutate({ id: taskId, updates: { status } })
-                  }
-                  onToggleChecklistItem={(itemId, isCompleted) =>
-                    updateChecklistItemMutation.mutate({ id: itemId, isCompleted })
-                  }
-                  onClick={() => console.log('Open task details for:', task.id)}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="progress" className="mt-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {inProgressTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onToggleImportant={(taskId, isImportant) =>
-                    updateTaskMutation.mutate({ id: taskId, updates: { is_important: isImportant } })
-                  }
-                  onToggleStatus={(taskId, status) =>
-                    updateTaskMutation.mutate({ id: taskId, updates: { status } })
-                  }
-                  onToggleChecklistItem={(itemId, isCompleted) =>
-                    updateChecklistItemMutation.mutate({ id: itemId, isCompleted })
-                  }
-                  onClick={() => console.log('Open task details for:', task.id)}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="completed" className="mt-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {completedTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onToggleImportant={(taskId, isImportant) =>
-                    updateTaskMutation.mutate({ id: taskId, updates: { is_important: isImportant } })
-                  }
-                  onToggleStatus={(taskId, status) =>
-                    updateTaskMutation.mutate({ id: taskId, updates: { status } })
-                  }
-                  onToggleChecklistItem={(itemId, isCompleted) =>
-                    updateChecklistItemMutation.mutate({ id: itemId, isCompleted })
-                  }
-                  onClick={() => console.log('Open task details for:', task.id)}
-                />
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        {filteredTasks.length === 0 && (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">📝</div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">No tasks yet</h2>
-            <p className="text-gray-600 mb-6">Create your first task to get started!</p>
-            <Button onClick={() => setShowCreateTask(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Your First Task
-            </Button>
-          </div>
-        )}
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold text-foreground mb-2">Welcome back!</h2>
+        <p className="text-muted-foreground">Here's what's happening with your tasks and projects.</p>
       </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalTasks}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CheckSquare className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.completedTasks}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Important</CardTitle>
+            <Star className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.importantTasks}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Projects</CardTitle>
+            <FolderOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalProjects}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Tasks</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recentTasks && recentTasks.length > 0 ? (
+            <div className="space-y-3">
+              {recentTasks.map((task) => (
+                <div key={task.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex-1">
+                      <p className="font-medium">{task.title}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {task.is_important && (
+                      <Badge variant="secondary">
+                        <Star className="h-3 w-3 mr-1" />
+                        Important
+                      </Badge>
+                    )}
+                    <Badge variant={
+                      task.status === 'completed' ? 'default' : 
+                      task.status === 'in_progress' ? 'secondary' : 'outline'
+                    }>
+                      {task.status.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-center py-8">No tasks yet. Create your first task to get started!</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
