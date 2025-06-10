@@ -70,17 +70,40 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md bg-card border-border">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ 
+        backgroundColor: 'hsl(222.2 84% 4.9%)',
+        color: 'hsl(210 40% 98%)'
+      }}
+    >
+      <Card 
+        className="w-full max-w-md border-border"
+        style={{ 
+          backgroundColor: 'hsl(222.2 84% 4.9%)',
+          borderColor: 'hsl(215 27.9% 16.9%)'
+        }}
+      >
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-foreground">📝 Task Flow</CardTitle>
-          <CardDescription className="text-muted-foreground">
+          <CardTitle 
+            className="text-2xl font-bold"
+            style={{ color: 'hsl(210 40% 98%)' }}
+          >
+            📝 Task Flow
+          </CardTitle>
+          <CardDescription style={{ color: 'hsl(217.9 10.6% 64.9%)' }}>
             Organize your projects and tasks with emoji-powered productivity
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList 
+              className="grid w-full grid-cols-2"
+              style={{ 
+                backgroundColor: 'hsl(215 27.9% 16.9%)',
+                color: 'hsl(217.9 10.6% 64.9%)'
+              }}
+            >
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
@@ -88,7 +111,9 @@ const Auth = () => {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="signin-email" style={{ color: 'hsl(210 40% 98%)' }}>
+                    Email
+                  </Label>
                   <Input
                     id="signin-email"
                     type="email"
@@ -96,11 +121,17 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="bg-input border-border text-foreground"
+                    style={{ 
+                      backgroundColor: 'hsl(215 27.9% 16.9%)',
+                      borderColor: 'hsl(215 27.9% 16.9%)',
+                      color: 'hsl(210 40% 98%)'
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <Label htmlFor="signin-password" style={{ color: 'hsl(210 40% 98%)' }}>
+                    Password
+                  </Label>
                   <Input
                     id="signin-password"
                     type="password"
@@ -108,7 +139,11 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="bg-input border-border text-foreground"
+                    style={{ 
+                      backgroundColor: 'hsl(215 27.9% 16.9%)',
+                      borderColor: 'hsl(215 27.9% 16.9%)',
+                      color: 'hsl(210 40% 98%)'
+                    }}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -120,7 +155,9 @@ const Auth = () => {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email" style={{ color: 'hsl(210 40% 98%)' }}>
+                    Email
+                  </Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -128,11 +165,17 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="bg-input border-border text-foreground"
+                    style={{ 
+                      backgroundColor: 'hsl(215 27.9% 16.9%)',
+                      borderColor: 'hsl(215 27.9% 16.9%)',
+                      color: 'hsl(210 40% 98%)'
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password" style={{ color: 'hsl(210 40% 98%)' }}>
+                    Password
+                  </Label>
                   <Input
                     id="signup-password"
                     type="password"
@@ -140,7 +183,11 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="bg-input border-border text-foreground"
+                    style={{ 
+                      backgroundColor: 'hsl(215 27.9% 16.9%)',
+                      borderColor: 'hsl(215 27.9% 16.9%)',
+                      color: 'hsl(210 40% 98%)'
+                    }}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
