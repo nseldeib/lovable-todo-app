@@ -20,6 +20,7 @@ const Auth = () => {
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
+      console.log("TaskFlow - User already authenticated, redirecting to dashboard");
       navigate('/');
     }
   }, [user, navigate]);
@@ -28,17 +29,20 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    console.log("TaskFlow - Attempting sign in");
     const { error } = await signIn(email, password);
     
     if (error) {
+      console.error("TaskFlow - Sign in error:", error);
       toast({
         title: "Error signing in",
         description: error.message,
         variant: "destructive",
       });
     } else {
+      console.log("TaskFlow - Sign in successful");
       toast({
-        title: "Welcome back!",
+        title: "Welcome back to TaskFlow!",
         description: "You have successfully signed in.",
       });
       navigate('/');
@@ -51,18 +55,21 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    console.log("TaskFlow - Attempting sign up");
     const { error } = await signUp(email, password);
     
     if (error) {
+      console.error("TaskFlow - Sign up error:", error);
       toast({
         title: "Error signing up",
         description: error.message,
         variant: "destructive",
       });
     } else {
+      console.log("TaskFlow - Sign up successful");
       toast({
-        title: "Check your email!",
-        description: "We sent you a confirmation link.",
+        title: "Welcome to TaskFlow!",
+        description: "Check your email for a confirmation link.",
       });
     }
     
@@ -70,40 +77,19 @@ const Auth = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ 
-        backgroundColor: 'hsl(222.2 84% 4.9%)',
-        color: 'hsl(210 40% 98%)'
-      }}
-    >
-      <Card 
-        className="w-full max-w-md border-border"
-        style={{ 
-          backgroundColor: 'hsl(222.2 84% 4.9%)',
-          borderColor: 'hsl(215 27.9% 16.9%)'
-        }}
-      >
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <Card className="w-full max-w-md border-border bg-card">
         <CardHeader className="text-center">
-          <CardTitle 
-            className="text-2xl font-bold"
-            style={{ color: 'hsl(210 40% 98%)' }}
-          >
-            📝 Task Flow
+          <CardTitle className="text-2xl font-bold text-foreground">
+            📝 TaskFlow
           </CardTitle>
-          <CardDescription style={{ color: 'hsl(217.9 10.6% 64.9%)' }}>
+          <CardDescription className="text-muted-foreground">
             Organize your projects and tasks with emoji-powered productivity
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList 
-              className="grid w-full grid-cols-2"
-              style={{ 
-                backgroundColor: 'hsl(215 27.9% 16.9%)',
-                color: 'hsl(217.9 10.6% 64.9%)'
-              }}
-            >
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
@@ -111,9 +97,7 @@ const Auth = () => {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email" style={{ color: 'hsl(210 40% 98%)' }}>
-                    Email
-                  </Label>
+                  <Label htmlFor="signin-email">Email</Label>
                   <Input
                     id="signin-email"
                     type="email"
@@ -121,17 +105,10 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    style={{ 
-                      backgroundColor: 'hsl(215 27.9% 16.9%)',
-                      borderColor: 'hsl(215 27.9% 16.9%)',
-                      color: 'hsl(210 40% 98%)'
-                    }}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password" style={{ color: 'hsl(210 40% 98%)' }}>
-                    Password
-                  </Label>
+                  <Label htmlFor="signin-password">Password</Label>
                   <Input
                     id="signin-password"
                     type="password"
@@ -139,15 +116,10 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    style={{ 
-                      backgroundColor: 'hsl(215 27.9% 16.9%)',
-                      borderColor: 'hsl(215 27.9% 16.9%)',
-                      color: 'hsl(210 40% 98%)'
-                    }}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign In'}
+                  {loading ? 'Signing in...' : 'Sign In to TaskFlow'}
                 </Button>
               </form>
             </TabsContent>
@@ -155,9 +127,7 @@ const Auth = () => {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" style={{ color: 'hsl(210 40% 98%)' }}>
-                    Email
-                  </Label>
+                  <Label htmlFor="signup-email">Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -165,17 +135,10 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    style={{ 
-                      backgroundColor: 'hsl(215 27.9% 16.9%)',
-                      borderColor: 'hsl(215 27.9% 16.9%)',
-                      color: 'hsl(210 40% 98%)'
-                    }}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" style={{ color: 'hsl(210 40% 98%)' }}>
-                    Password
-                  </Label>
+                  <Label htmlFor="signup-password">Password</Label>
                   <Input
                     id="signup-password"
                     type="password"
@@ -183,15 +146,10 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    style={{ 
-                      backgroundColor: 'hsl(215 27.9% 16.9%)',
-                      borderColor: 'hsl(215 27.9% 16.9%)',
-                      color: 'hsl(210 40% 98%)'
-                    }}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing up...' : 'Sign Up'}
+                  {loading ? 'Creating account...' : 'Join TaskFlow'}
                 </Button>
               </form>
             </TabsContent>
