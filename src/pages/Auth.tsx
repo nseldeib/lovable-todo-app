@@ -70,11 +70,11 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md bg-card border-border">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">📝 Task Flow</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-foreground">📝 Task Flow</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Organize your projects and tasks with emoji-powered productivity
           </CardDescription>
         </CardHeader>
@@ -96,6 +96,7 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="bg-input border-border text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
@@ -107,6 +108,7 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="bg-input border-border text-foreground"
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -126,6 +128,7 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="bg-input border-border text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
@@ -137,6 +140,7 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="bg-input border-border text-foreground"
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
