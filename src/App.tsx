@@ -16,7 +16,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const AppRoutes = () => {
   const { user, loading } = useAuth();
   
   if (loading) {
@@ -27,21 +27,24 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  return user ? <>{children}</> : <Navigate to="/auth" replace />;
-};
-
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+  // If user is not authenticated, show auth page for all routes
+  if (!user) {
+    return <Auth />;
   }
   
-  return !user ? <>{children}</> : <Navigate to="/" replace />;
+  // If user is authenticated, show the main app
+  return (
+    <Routes>
+      <Route path="/*" element={<AppLayout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="tasks" element={<AllTasks />} />
+        <Route path="important" element={<ImportantTasks />} />
+        <Route path="today" element={<Today />} />
+        <Route path="projects" element={<Projects />} />
+      </Route>
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
 };
 
 const App = () => (
@@ -52,31 +55,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route 
-                path="/auth" 
-                element={
-                  <PublicRoute>
-                    <Auth />
-                  </PublicRoute>
-                } 
-              />
-              <Route 
-                path="/*" 
-                element={
-                  <ProtectedRoute>
-                    <AppLayout />
-                  </ProtectedRoute>
-                } 
-              >
-                <Route index element={<Dashboard />} />
-                <Route path="tasks" element={<AllTasks />} />
-                <Route path="important" element={<ImportantTasks />} />
-                <Route path="today" element={<Today />} />
-                <Route path="projects" element={<Projects />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppRoutes />
           </BrowserRouter>
         </div>
       </TooltipProvider>
