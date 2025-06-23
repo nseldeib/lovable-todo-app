@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Auth from "./pages/Auth";
+import Landing from "./pages/Landing";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import AllTasks from "./pages/AllTasks";
@@ -30,10 +31,16 @@ const AppRoutes = () => {
     );
   }
   
-  // For TaskFlow - if no user is authenticated, always show the Auth page
+  // For TaskFlow - if no user is authenticated, show landing page and auth routes
   if (!user) {
-    console.log("TaskFlow - Showing Auth page (no user authenticated)");
-    return <Auth />;
+    console.log("TaskFlow - Showing landing/auth pages (no user authenticated)");
+    return (
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="*" element={<Landing />} />
+      </Routes>
+    );
   }
   
   // User is authenticated - show the main TaskFlow app
